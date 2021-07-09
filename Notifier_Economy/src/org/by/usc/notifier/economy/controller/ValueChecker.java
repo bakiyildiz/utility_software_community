@@ -1,6 +1,7 @@
 package org.by.usc.notifier.economy.controller;
 
 import java.text.DateFormat;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -10,7 +11,6 @@ import org.by.usc.common.COMMON;
 import org.by.usc.notifier.economy.NotifierEconomy;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 /**
@@ -19,19 +19,19 @@ import org.jsoup.select.Elements;
  */
 public class ValueChecker extends COMMON {
 	
-	public static void check(String notifierName, String checkType, String checkCode, String title, String valueConfigName, String differenceConfigName, int removeDigit, String replace){
-		
-		// GauUsdNotifier, gau-usd, Gau/Usd, GauUsdValue, GauUsdDifference
+	public static void check(String notifierName, String url, String checkCode, String title, String valueConfigName, String differenceConfigName, int digitCount,
+			int removeDigit, String replaceTarget, String replacement){
 		
 		double oldValue = 0;
 		double newValue = 0;
 		
 		try {
         	log(NotifierEconomy.APP_NAME, "Checking " + title + " Value");
-        	newValue = getData(checkType, checkCode, removeDigit, replace);
+        	newValue = getData(url, checkCode, digitCount, removeDigit, replaceTarget, replacement);
 		} catch (Exception e) {
 			e.printStackTrace();
         	log(NotifierEconomy.APP_NAME, "check " + title + " Exception: " + e);
+        	return;
 		}
 		
 		String[] valConfKeys = {valueConfigName};
@@ -78,15 +78,28 @@ public class ValueChecker extends COMMON {
 		
 	}
 	
-	private static double getData(String checkType, String checkCode, int removeDigit, String replace) throws Exception {
+	private static double getData(String url, String checkCode, int digitCount, int removeDigit, String replaceTarget, String replacement) throws Exception {
         try {
-            Document doc = Jsoup.connect("https://investing.com/" + checkType + "/" + checkCode).userAgent("mozilla/17.0").timeout(10000).get();
-        	Element elementByID = doc.getElementById("last_last");
+        	Document doc = Jsoup.connect(url).userAgent("mozilla/17.0").timeout(20000).get();
+        	Elements elementByID = doc.select(checkCode);
             String stringValue = elementByID.text();
-            stringValue = stringValue.substring(0, stringValue.length()-removeDigit);
-            if(replace != null)
-            	stringValue = stringValue.replace(replace, "");
-            return Double.valueOf(stringValue);
+            
+            if(replaceTarget != null && replacement != null)
+            	stringValue = stringValue.replace(replaceTarget, replacement);
+            
+            stringValue = stringValue.replace(",", "."); // default
+            
+            if(removeDigit > 0)
+            	stringValue = stringValue.substring(0, stringValue.length()-removeDigit);
+            
+            String format = "##.";
+            for (int i = 0; i < digitCount; i++)
+				format += "#";
+            
+            stringValue = new DecimalFormat(format).format(Double.valueOf(stringValue));
+            stringValue = stringValue.replace(",", ".");
+
+            return Double.valueOf(stringValue.replace(",", "."));
         } catch (Exception e) {
         	e.printStackTrace();
         	log(NotifierEconomy.APP_NAME, "getData Exception: " + e);

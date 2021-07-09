@@ -1,6 +1,5 @@
 package org.by.usc.notifier.economy;
 
-import org.by.usc.notifier.economy.controller.DolarTryController;
 import org.by.usc.notifier.economy.controller.ValueChecker;
 import org.by.usc.common.COMMON;
 
@@ -16,28 +15,26 @@ public class NotifierEconomy extends COMMON {
 	
 	public static void main(String[] args) {
 		try {
-			DolarTryController.checkDolar();
 			while(canItWork(APP_NAME)) {
-				//Thread.sleep(20000);
-				ValueChecker.check("DolarNotifier", "currencies", "usd-try", "USD/TRY", "DolarValue", "DolarDifference", 2, null);
+				ValueChecker.check("DolarNotifier", "https://www.bloomberght.com/", "#dolar > span > small.value.LastPrice", "USD/TRY", "DolarValue", "DolarDifference", 2, 0, null, null);
 				Thread.sleep(20000);
-				ValueChecker.check("EuroNotifier", "currencies", "eur-try", "EUR/TRY", "EuroValue", "EuroDifference", 2, null);
+				ValueChecker.check("EuroNotifier", "https://www.bloomberght.com/", "#euro > span > small.value.LastPrice", "EUR/TRY", "EuroValue", "EuroDifference", 2, 0, null, null);
 				Thread.sleep(20000);
-				ValueChecker.check("EurUsdNotifier", "currencies", "eur-usd", "EUR/USD", "EurUsdValue", "EurUsdDifference", 1, null);
+				ValueChecker.check("EurUsdNotifier", "https://www.bloomberght.com/", "#eur-usd > span > small.value.LastPrice", "EUR/USD", "EurUsdValue", "EurUsdDifference", 2, 0, null, null);
 				Thread.sleep(20000);
-				ValueChecker.check("GauUsdNotifier", "currencies", "gau-usd", "GAU/USD", "GauUsdValue", "GauUsdDifference", 2, null);
+				ValueChecker.check("GauUsdNotifier", "https://bigpara.hurriyet.com.tr/altin/altin-kg-dolar-fiyati/", "#content > div.contentLeft > div > div.kurDetail.mBot20 > div:nth-child(3) > span.value.up", "GAU/USD", "GauUsdValue", "GauUsdDifference", 1, 3, null, null);
 				Thread.sleep(20000);
-				ValueChecker.check("GauTryNotifier", "currencies", "gau-try", "GAU/TRY", "GauTryValue", "GauTryDifference", 2, null);
+				ValueChecker.check("GauTryNotifier", "https://finans.mynet.com/altin/xgld-spot-altin-tl-gr/", "body > section > div.row > div.col-12.col-lg-8.col-content > div:nth-child(5) > div > div > div.flex-list-2-col.flex.justify-content-between.data-info-ul-box-m > ul:nth-child(1) > li:nth-child(2) > span:nth-child(2)", "GAU/TRY", "GauTryValue", "GauTryDifference", 0, 0, null, null);
 				Thread.sleep(20000);
-				ValueChecker.check("CDS5", "rates-bonds", "turkey-cds-5-year-usd-streaming-chart", "Türkiye 5 Yýllýk CDS", "CDS5Value", "CDS5Difference", 2, null);
+				ValueChecker.check("CDS5", "http://www.worldgovernmentbonds.com/cds-historical-data/turkey/5-years/", "#post-33 > div > div > div.thecontent > div.w3-row > div.w3-col.l4.w3-margin-bottom > div.w3-xlarge > b", "Türkiye 5 Yýllýk CDS", "CDS5Value", "CDS5Difference", 0, 0, null, null);
 				Thread.sleep(20000);
-				ValueChecker.check("GauOns", "currencies", "xau-usd", "ONS Altýn", "GauOnsValue", "GauOnsDifference", 2, ",");
+				ValueChecker.check("GauOns", "https://www.bloomberght.com/", "#altin-ons > span > small.value.LastPrice", "ONS Altýn", "GauOnsValue", "GauOnsDifference", 0, 0, ".", "");
 				Thread.sleep(20000);
-				ValueChecker.check("UsdEnd", "indices", "usdollar", "Dolar Endeksi", "UsdEndValue", "UsdEndDifference", 0, null);
+				ValueChecker.check("UsdEnd", "https://www.marketwatch.com/investing/index/dxy", "body > div.container.container--body > div.region.region--intraday > div.column.column--aside > div > div.intraday__data > h3 > span", "Dolar Endeksi", "UsdEndValue", "UsdEndDifference", 2, 0, null, null);
 				Thread.sleep(20000);
-				ValueChecker.check("BIST100", "indices", "ise-100", "BIST 100 Endeksi", "BIST100Value", "BIST100Difference", 2, ",");
+				ValueChecker.check("BIST100", "https://bigpara.hurriyet.com.tr/borsa/canli-borsa/", "#content > div > div.contentLeft > div > div.wideContent.sort-bar-x > div.filterBar.liveStockFilterBar > div > div.stockPrice.node-c", "BIST 100 Endeksi", "BIST100Value", "BIST100Difference", 0, 0, null, null);
 				Thread.sleep(20000);
-				ValueChecker.check("Brent", "commodities", "brent-oil", "Brent Petrol", "BrentValue", "BrentDifference", 2, null);
+				ValueChecker.check("Brent", "https://www.bloomberght.com/", "#brent-petrol > span > small.value.LastPrice", "Brent Petrol", "BrentValue", "BrentDifference", 0, 0, null, null);
 			}
 			
 			log(APP_NAME, "Kill signal!");
