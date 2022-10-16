@@ -1,7 +1,5 @@
 package org.by.usc.mpm.processor;
 
-import java.io.IOException;
-
 import org.by.usc.common.COMMON;
 import org.by.usc.common.model.Mail;
 import org.by.usc.mpm.MPM;

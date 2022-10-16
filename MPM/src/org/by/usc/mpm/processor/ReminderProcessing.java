@@ -2,8 +2,6 @@ package org.by.usc.mpm.processor;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.SQLException;
-
 import org.by.usc.common.COMMON;
 import org.by.usc.common.model.Mail;
 import org.by.usc.mpm.MPM;

@@ -19,8 +19,8 @@ import org.jsoup.select.Elements;
  */
 public class ValueChecker extends COMMON {
 	
-	public static void check(String notifierName, String url, String checkCode, String title, String valueConfigName, String differenceConfigName, int digitCount,
-			int removeDigit, String replaceTarget, String replacement){
+	public static Long check(String notifierName, String url, String checkCode, String title, String valueConfigName, String differenceConfigName, int digitCount,
+			int removeDigit, String replaceTarget, String replacement, Long errorCount) {
 		
 		double oldValue = 0;
 		double newValue = 0;
@@ -28,54 +28,55 @@ public class ValueChecker extends COMMON {
 		try {
         	log(NotifierEconomy.APP_NAME, "Checking " + title + " Value");
         	newValue = getData(url, checkCode, digitCount, removeDigit, replaceTarget, replacement);
+			
+			String[] valConfKeys = {valueConfigName};
+			HashMap<String, String> valConfigs = getNotifierEconomyValues(valConfKeys);
+			oldValue = Double.valueOf(valConfigs.get(valueConfigName));
+			
+			if(oldValue != newValue && newValue != 0){
+	            DateFormat dateFormatFull = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+	            Date date = new Date();
+	            
+	            double kontrol = 0;
+	            kontrol = (oldValue) - (newValue);
+	            
+	            String mailSubject = null;
+	            String mailContent = null;
+	            boolean mailSend = false;
+	            
+	            String[] confKeys = {differenceConfigName};
+	    		HashMap<String, String> configs = getNotifierEconomyValues(confKeys);
+	    		String value = configs.get(differenceConfigName);
+	    		double dif = Double.valueOf(value);
+	            
+	            if(kontrol >= dif){
+	            	mailSubject = title + " Notify";
+	            	mailContent = title + " deðeri düþtü.\n\nEski deðer: " + oldValue + ", yeni deðer: " + newValue + " - " + dateFormatFull.format(date);
+	            	mailSend = true;
+	                oldValue = newValue;
+	                updateNotifierEconomyValue(valConfKeys[0], String.valueOf(oldValue));
+	            }else if(kontrol <= -dif){
+	            	mailSubject = title + " Notify";
+	            	mailContent = title + " deðeri yükseldi.\n\nEski deðer: " + oldValue + ", yeni deðer: " + newValue + " - " + dateFormatFull.format(date);
+	            	mailSend = true;
+	                oldValue = newValue;
+	                updateNotifierEconomyValue(valConfKeys[0], String.valueOf(oldValue));
+	            }
+	            
+	            if(mailSend) {
+	            	List<String> mailList = getMailList(notifierName);
+	                for(String mailTo : mailList) {
+	                	insertNewMail(notifierName, mailTo, mailSubject, mailContent);
+	                }
+	            }
+	        }
 		} catch (Exception e) {
 			e.printStackTrace();
-        	log(NotifierEconomy.APP_NAME, "check " + title + " Exception: " + e);
-        	return;
+			log(NotifierEconomy.APP_NAME, "check " + title + " Exception: " + e);
+			errorCount++;
 		}
 		
-		String[] valConfKeys = {valueConfigName};
-		HashMap<String, String> valConfigs = getConfigs(NotifierEconomy.APP_NAME, valConfKeys);
-		oldValue = Double.valueOf(valConfigs.get(valueConfigName));
-		
-		if(oldValue != newValue && newValue != 0){
-            DateFormat dateFormatFull = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-            Date date = new Date();
-            
-            double kontrol = 0;
-            kontrol = (oldValue) - (newValue);
-            
-            String mailSubject = null;
-            String mailContent = null;
-            boolean mailSend = false;
-            
-            String[] confKeys = {differenceConfigName};
-    		HashMap<String, String> configs = getConfigs(NotifierEconomy.APP_NAME, confKeys);
-    		String value = configs.get(differenceConfigName);
-    		double dif = Double.valueOf(value);
-            
-            if(kontrol >= dif){
-            	mailSubject = title + " Notify";
-            	mailContent = title + " deðeri düþtü.\n\nEski deðer: " + oldValue + ", yeni deðer: " + newValue + " - " + dateFormatFull.format(date);
-            	mailSend = true;
-                oldValue = newValue;
-                updateConfigs(NotifierEconomy.APP_NAME, valConfKeys, String.valueOf(oldValue));
-            }else if(kontrol <= -dif){
-            	mailSubject = title + " Notify";
-            	mailContent = title + " deðeri yükseldi.\n\nEski deðer: " + oldValue + ", yeni deðer: " + newValue + " - " + dateFormatFull.format(date);
-            	mailSend = true;
-                oldValue = newValue;
-                updateConfigs(NotifierEconomy.APP_NAME, valConfKeys, String.valueOf(oldValue));
-            }
-            
-            if(mailSend) {
-            	List<String> mailList = getMailList(notifierName);
-                for(String mailTo : mailList) {
-                	insertNewMail(notifierName, mailTo, mailSubject, mailContent);
-                }
-            }
-        }
-		
+		return errorCount;
 	}
 	
 	private static double getData(String url, String checkCode, int digitCount, int removeDigit, String replaceTarget, String replacement) throws Exception {

@@ -78,7 +78,7 @@ public class COMMON {
 		try {
 			
 			conn = connectDb();
-			String query = "select * from Rasp.App_Config where CONF_NAME = ? and CONF_KEY in (";
+			String query = "select * from Rasp.App_Config where CONFIG_NAME = ? and CONFIG_KEY in (";
 			
 			for(String str : confKey) {
 				query += "'" + str + "',";
@@ -92,7 +92,7 @@ public class COMMON {
 			rs = ps.executeQuery();
 			
 			while (rs.next()) {
-				configs.put(rs.getString("CONF_KEY"), rs.getString("CONF_VALUE"));
+				configs.put(rs.getString("CONFIG_KEY"), rs.getString("CONFIG_VALUE"));
 			}
 			
 			closeParam(conn, null, rs, ps);
@@ -134,9 +134,9 @@ public class COMMON {
 	}
 	
 	public static boolean canItWork(String appName) {
-		String[] confKeys = {appName};
-		HashMap<String, String> configs = getConfigs("CanItWork", confKeys);
-		String check = configs.get(appName);
+		String[] confKeys = {"CanItWork"};
+		HashMap<String, String> configs = getConfigs(appName, confKeys);
+		String check = configs.get("CanItWork");
 		
 		if(check != null && check.equalsIgnoreCase("Y")) {
 			return true;
@@ -165,7 +165,7 @@ public class COMMON {
 			log(APP_NAME, "updateConfigs, confName: " + confName + ", newValue: " + newValue + ", confKeys: " + confKeys);
 			
 			conn = connectDb();
-			String query = "UPDATE Rasp.App_Config SET CONF_VALUE=? WHERE CONF_NAME = ? and CONF_KEY in(";
+			String query = "UPDATE Rasp.App_Config SET CONFIG_VALUE=? WHERE CONFIG_NAME = ? and CONFIG_KEY in(";
 			
 			for(String str : confKey) {
 				query += "'" + str + "',";
@@ -187,6 +187,65 @@ public class COMMON {
 		}
 	}
 	
+	public static void updateNotifierEconomyValue(String title, String Value){
+		PreparedStatement ps = null;
+		Connection conn = null;
+		
+		try {
+			
+			log(APP_NAME, "updateNotifierEconomyValue, title: " + title + ", Value: " + Value);
+			
+			conn = connectDb();
+			String query = "UPDATE Rasp.Notifier_Economy_Values SET VALUE=? WHERE TITLE = ?";
+			
+			ps = conn.prepareStatement(query);
+			ps.setString(1, Value);
+			ps.setString(2, title);
+			
+			ps.executeUpdate();
+			
+			closeParam(conn, null, null, ps);
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			log(APP_NAME, "updateNotifierEconomyValue Exception: " + e);
+		}
+	}
+	
+	public static HashMap<String, String> getNotifierEconomyValues(String[] titleList){
+		HashMap<String, String> configs = new HashMap<>();
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		Connection conn = null;
+		
+		try {
+			
+			conn = connectDb();
+			String query = "select * from Rasp.Notifier_Economy_Values where TITLE in (";
+			
+			for(String str : titleList) {
+				query += "'" + str + "',";
+			}
+			
+			query += "'')";
+			
+			ps = conn.prepareStatement(query);
+			rs = ps.executeQuery();
+			
+			while (rs.next()) {
+				configs.put(rs.getString("TITLE"), rs.getString("VALUE"));
+			}
+			
+			closeParam(conn, null, rs, ps);
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			log(APP_NAME, "getNotifierEconomyValues Exception: " + e);
+		}
+		
+		return configs;
+	}
+	
 	public static void insertNewMail(String moduleName, String mailTo, String mailSubject, String mailContent) {
 		try {
 			Connection conn = null;
@@ -195,7 +254,7 @@ public class COMMON {
 			
 			PreparedStatement insert;
 				
-			String query = "insert into Rasp.Mail_Send_List (MODULE_NAME, CDATE, UDATE, MAIL_SUBJECT, MAIL_CONTENT, MAIL_TO, STATUS, DETAIL)";
+			String query = "insert into Rasp.Mail_Events (MODULE_NAME, CDATE, UDATE, MAIL_SUBJECT, MAIL_CONTENT, MAIL_TO, STATUS, DETAIL)";
 			query += " values (?, sysdate(), null, ?, ?, ?, 'N', null)";
 			
 			insert = conn.prepareStatement(query);

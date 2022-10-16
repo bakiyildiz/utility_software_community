@@ -15,7 +15,7 @@ import org.by.usc.common.COMMON;
  * Utility Software Community Manager
  *
  */
-@SuppressWarnings({"deprecation", "unused"})
+@SuppressWarnings("unused")
 public class USCM extends COMMON {
 	
 	public static String APP_NAME = "USCM";
@@ -24,10 +24,13 @@ public class USCM extends COMMON {
 	
 	public static void main(String[] args) {
 		try {
-			
 			HealthChecker healthChecker = new HealthChecker();
 			Thread thread = new Thread(healthChecker);
 			thread.start();
+			
+			MDMHealthChecker mdmHealthChecker = new MDMHealthChecker();
+			Thread thread2 = new Thread(mdmHealthChecker);
+			thread2.start();
 			
 			List<String> mailList = getMailList("SysAdm");
 			DateFormat dateFormatFull = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
@@ -36,7 +39,7 @@ public class USCM extends COMMON {
             	insertNewMail(APP_NAME, mailTo, "Server Started", "Server Started - " + dateFormatFull.format(startDate));
             }
 			
-			String[] confKeys = {"CheckClock", "WaitTime"};
+            /*String[] confKeys = {"CheckClock", "WaitTime"};
 			globalConfigs = getConfigs("USCM", confKeys);
 			
 			boolean isItTime = false;
@@ -48,7 +51,7 @@ public class USCM extends COMMON {
 			Calendar c1 = Calendar.getInstance();
 			c1.setTime(t1);
 			
-			/*while(canItWork(APP_NAME)) {
+			while(canItWork(APP_NAME)) {
 				Thread.sleep(60000);
 				
 				Date now = new Date();
@@ -66,7 +69,7 @@ public class USCM extends COMMON {
 				closeProcess();
 			}*/
 			
-			log(APP_NAME, "Kill signal!");
+			log(APP_NAME, "Main process finished");
 		} catch (Exception e) {
 			e.printStackTrace();
         	log(APP_NAME, "main Exception: " + e);

@@ -1,5 +1,7 @@
 package org.by.usc.mdm;
 
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -14,6 +16,7 @@ import java.util.Properties;
 import javax.mail.Flags;
 import javax.mail.Folder;
 import javax.mail.Message;
+import javax.mail.MessagingException;
 import javax.mail.PasswordAuthentication;
 import javax.mail.Session;
 import javax.mail.Store;
@@ -30,18 +33,25 @@ import org.by.usc.common.model.Mail;
  * Mail Delivery Module
  *
  */
-public class MDM extends COMMON{
+public class MDM extends COMMON {
 	
 	public static String APP_NAME = "MDM";
 	private static Connection conn = null;
 	
-	static String[] mailConfigKeys = {"USERNAME", "PASSWORD", "PORT", "HOST"};
-	static HashMap<String, String> mailConfigs = null;
+	static String[] mailConfigKeys = {"USERNAME", "PASSWORD", "PORT", "HOST", "MAIL_SEND_HEADER"};
+	static HashMap<String, String> getMailConfigs = null;
+	static HashMap<String, String> sendMailConfigs = null;
 	
-	static String mailHost = null;
-	static String mailUser = null;
-	static String mailPassword = null;
-	static String mailPort = null;
+	static String getMailHost = null;
+	static String getMailUser = null;
+	static String getMailPassword = null;
+	static String getMailPort = null;
+	
+	static String sendMailHost = null;
+	static String sendMailUser = null;
+	static String sendMailPassword = null;
+	static String sendMailPort = null;
+	static String sendMailHeader = null;
 	
 	static Store emailStore;
     static Folder emailFolder;
@@ -49,19 +59,40 @@ public class MDM extends COMMON{
 	public static void main(String[] args) {
 		try {
 			
-			mailConfigs = getConfigs("MAIL", mailConfigKeys);
+			getMailConfigs = getConfigs("MAIL_IN", mailConfigKeys);
 			
-			mailHost = mailConfigs.get("HOST");
-			mailUser = mailConfigs.get("USERNAME");
-			mailPassword = mailConfigs.get("PASSWORD");
-			mailPort = mailConfigs.get("PORT");
+			getMailHost = getMailConfigs.get("HOST");
+			getMailUser = getMailConfigs.get("USERNAME");
+			getMailPassword = getMailConfigs.get("PASSWORD");
+			getMailPort = getMailConfigs.get("PORT");
+			
+			
+			sendMailConfigs = getConfigs("MAIL_OUT", mailConfigKeys);
+			
+			sendMailHost = sendMailConfigs.get("HOST");
+			sendMailUser = sendMailConfigs.get("USERNAME");
+			sendMailPassword = sendMailConfigs.get("PASSWORD");
+			sendMailPort = sendMailConfigs.get("PORT");
+			sendMailHeader = sendMailConfigs.get("MAIL_SEND_HEADER");
+			
+			int waitStep = 1;
 			
 			while(canItWork(APP_NAME)) {
 				Thread.sleep(10000);
 				log(APP_NAME, "Checking new mails..");
 				checkNewMail();
 				log(APP_NAME, "Checking new processing mails..");
-				checkNewProcessingMail();
+				try {
+					checkNewProcessingMail();
+				} catch (SocketException | MessagingException | UnknownHostException e) {
+					e.printStackTrace();
+					log(APP_NAME, "special exception: " + e);
+					
+					if(waitStep < 7)
+						waitStep++;
+					log(APP_NAME, "Wating " + 600 * waitStep * 1000 + " second.");
+					Thread.sleep(600 * waitStep * 1000);
+				}
 			}
 			log(APP_NAME, "Kill signal!");
 		} catch (Exception e) {
@@ -77,7 +108,7 @@ public class MDM extends COMMON{
 		try {
 			conn = checkConnectDb(conn);
 			
-			String query = "select * from Rasp.Mail_Send_List where status = 'N'";
+			String query = "select * from Rasp.Mail_Events where status = 'N'";
 			stmt = conn.createStatement();
 			rs = stmt.executeQuery(query);
 			
@@ -121,23 +152,23 @@ public class MDM extends COMMON{
 	public static void sendMailProcess(Mail mail) throws Exception{
 		
 		Properties props = new Properties();
-		props.put("mail.smtp.host", mailHost);
+		props.put("mail.smtp.host", sendMailHost);
 		props.put("mail.smtp.auth", "true");
-		props.put("mail.smtp.port", mailPort);
+		props.put("mail.smtp.port", sendMailPort);
 		props.put("mail.smtp.starttls.enable", "true");
 
 		Session session = Session.getDefaultInstance(props, new javax.mail.Authenticator() {
 			protected PasswordAuthentication getPasswordAuthentication() {
-				return new PasswordAuthentication(mailUser, mailPassword);
+				return new PasswordAuthentication(sendMailUser, sendMailPassword);
 			}
 		});
 
 		try {
 			MimeMessage message = new MimeMessage(session);
-			message.setFrom(new InternetAddress(mailUser));
+			message.setFrom(new InternetAddress(sendMailUser));
 			message.addRecipient(Message.RecipientType.TO, new InternetAddress(mail.getMailTo()));
 			message.setSubject(mail.getMailSubject());
-			message.setText(mail.getMailContent());
+			message.setText(mail.getMailContent() + "\n\n" + sendMailHeader);
 			
 			System.setProperty("java.net.preferIPv4Stack" , "true");
 
@@ -154,7 +185,7 @@ public class MDM extends COMMON{
 		PreparedStatement update;
 		try {
 			
-			String query = "update Rasp.Mail_Send_List set STATUS = ?, DETAIL = ?, UDATE = SYSDATE() WHERE ID = ?";
+			String query = "update Rasp.Mail_Events set STATUS = ?, DETAIL = ?, UDATE = SYSDATE() WHERE ID = ?";
 			update = conn.prepareStatement(query);
 			update.setString(1, status);
 			update.setString(2, detail);
@@ -167,17 +198,17 @@ public class MDM extends COMMON{
 		}
 	}
 	
-	private static void checkNewProcessingMail() {
+	private static void checkNewProcessingMail() throws Exception {
 		getMailServerConnection();
 		getMailInbox();
 	}
 	
-	public static void getMailServerConnection() {
+	public static void getMailServerConnection() throws Exception {
 		try {
 			
 			Properties properties = new Properties();
-			properties.put("mail.pop3.host", mailHost);
-			properties.put("mail.pop3.port", "995");
+			properties.put("mail.pop3.host", sendMailHost);
+			properties.put("mail.pop3.port", sendMailPort);
 			properties.put("mail.pop3.starttls.enable", "true");
 			properties.put("mail.smtp.debug", "true");
 			Session emailSession = Session.getDefaultInstance(properties, new javax.mail.Authenticator() {
@@ -187,15 +218,16 @@ public class MDM extends COMMON{
 	        });
 		
 			emailStore = emailSession.getStore("imaps");
-			emailStore.connect(mailHost, mailUser, mailPassword);
+			emailStore.connect(sendMailHost, sendMailUser, sendMailPassword);
 			emailFolder = emailStore.getFolder("INBOX");
 		} catch (Exception e) {
 			e.printStackTrace();
 			log(APP_NAME, "getMailServerConnection Exception: " + e);
+			throw e;
 		}
 	}
 
-	public static void getMailInbox() {
+	public static void getMailInbox() throws Exception {
 		try {
 
 			if (emailStore == null || !emailStore.isConnected()) {
@@ -245,6 +277,7 @@ public class MDM extends COMMON{
 		} catch (Exception e) {
 			e.printStackTrace();
 			log(APP_NAME, "getMailInbox Exception: " + e);
+			throw e;
 		}
 	}
     

@@ -1,8 +1,6 @@
 package org.by.usc.uscm;
 
 import java.sql.Connection;
-import java.util.HashMap;
-
 import org.by.usc.common.COMMON;
 
 /**
@@ -13,7 +11,6 @@ public class HealthChecker extends COMMON implements Runnable {
 
 	@Override
 	public void run() {
-		
 		int errorCount = 0;
 		
 		while (true) {
@@ -37,11 +34,9 @@ public class HealthChecker extends COMMON implements Runnable {
 						String[] uptKeys = configs.get("AppNames").split(",");
 						updateConfigs("CanItWork", uptKeys, "Y");*/
 						
-						@SuppressWarnings("unused")
-						Process p = Runtime.getRuntime().exec("reboot");
+						Runtime.getRuntime().exec("reboot");
 					}
 				}
-				
 			} catch (Exception e) {
 				System.err.println("HealthChecker error: " + e);
 			}

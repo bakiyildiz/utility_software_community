@@ -21,7 +21,7 @@ import org.by.usc.reminder.model.ReminderModel;
  * Notifier Economy
  *
  */
-public class Reminder extends COMMON{
+public class Reminder extends COMMON {
 	
 	public static String APP_NAME = "Reminder";
 	private static Connection conn = null;
