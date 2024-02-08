@@ -75,12 +75,14 @@ public class MDM extends COMMON {
 			sendMailPort = sendMailConfigs.get("PORT");
 			sendMailHeader = sendMailConfigs.get("MAIL_SEND_HEADER");
 			
-			int waitStep = 1;
+//			int waitStep = 1;
 			
 			while(canItWork(APP_NAME)) {
-				Thread.sleep(10000);
+				Thread.sleep(5000);
 				log(APP_NAME, "Checking new mails..");
 				checkNewMail();
+				
+				Thread.sleep(5000);
 				log(APP_NAME, "Checking new processing mails..");
 				try {
 					checkNewProcessingMail();
@@ -88,10 +90,10 @@ public class MDM extends COMMON {
 					e.printStackTrace();
 					log(APP_NAME, "special exception: " + e);
 					
-					if(waitStep < 7)
-						waitStep++;
-					log(APP_NAME, "Wating " + 600 * waitStep * 1000 + " second.");
-					Thread.sleep(600 * waitStep * 1000);
+//					if(waitStep < 7)
+//						waitStep++;
+//					log(APP_NAME, "Wating " + 600 * waitStep * 1000 + " second.");
+//					Thread.sleep(600 * waitStep * 1000);
 				}
 			}
 			log(APP_NAME, "Kill signal!");
@@ -156,6 +158,10 @@ public class MDM extends COMMON {
 		props.put("mail.smtp.auth", "true");
 		props.put("mail.smtp.port", sendMailPort);
 		props.put("mail.smtp.starttls.enable", "true");
+		
+		props.put("mail.smtp.starttls.required", "true");
+		props.put("mail.smtp.ssl.protocols", "TLSv1.2");
+
 
 		Session session = Session.getDefaultInstance(props, new javax.mail.Authenticator() {
 			protected PasswordAuthentication getPasswordAuthentication() {
@@ -207,8 +213,8 @@ public class MDM extends COMMON {
 		try {
 			
 			Properties properties = new Properties();
-			properties.put("mail.pop3.host", sendMailHost);
-			properties.put("mail.pop3.port", sendMailPort);
+			properties.put("mail.pop3.host", getMailHost);
+			properties.put("mail.pop3.port", getMailPort);
 			properties.put("mail.pop3.starttls.enable", "true");
 			properties.put("mail.smtp.debug", "true");
 			Session emailSession = Session.getDefaultInstance(properties, new javax.mail.Authenticator() {
@@ -218,7 +224,7 @@ public class MDM extends COMMON {
 	        });
 		
 			emailStore = emailSession.getStore("imaps");
-			emailStore.connect(sendMailHost, sendMailUser, sendMailPassword);
+			emailStore.connect(getMailHost, getMailUser, getMailPassword);
 			emailFolder = emailStore.getFolder("INBOX");
 		} catch (Exception e) {
 			e.printStackTrace();

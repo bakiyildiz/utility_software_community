@@ -26,7 +26,7 @@ public class MDMHealthChecker extends COMMON implements Runnable {
 				PreparedStatement ps = null;
 				ResultSet rs = null;
 				
-				String query = "SELECT COUNT(*) FROM Rasp.Mail_Events WHERE STATUS = 'N' AND CDATE < NOW() - INTERVAL 30 MINUTE";
+				String query = "SELECT COUNT(*) FROM Rasp.Mail_Events WHERE STATUS = 'N' AND CDATE < NOW() - INTERVAL 5 MINUTE";
 
 				ps = conn.prepareStatement(query);
 				rs = ps.executeQuery();

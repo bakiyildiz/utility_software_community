@@ -2,6 +2,7 @@ package org.by.usc.notifier.economy;
 
 import org.by.usc.notifier.economy.controller.ValueChecker;
 
+import java.util.HashMap;
 import java.util.List;
 import org.by.usc.common.COMMON;
 
@@ -15,7 +16,7 @@ public class NotifierEconomy extends COMMON {
 	
 	public static String APP_NAME = "NotifierEconomy";
 	public static Long SLEEP_TIME = 20000L;
-	public static Long ERROR_NOTIFY_COUNT = 50L;
+	public static Long ERROR_NOTIFY_COUNT = 150L;
 	
 	public static Long errorCountDolarNotifier = 0L;
 	public static Long errorCountEuroNotifier = 0L;
@@ -30,42 +31,46 @@ public class NotifierEconomy extends COMMON {
 	
 	public static void main(String[] args) {
 		try {
+			String[] confKeys = {"ReportLastValueCount"};
+			HashMap<String, String> configs = getConfigs("NotifierEconomy", confKeys);
+			String ReportLastValueCount = configs.get("ReportLastValueCount");
 			while(canItWork(APP_NAME)) {
 				try {
 					Thread.sleep(SLEEP_TIME);
 					errorCountDolarNotifier = ValueChecker.check("DolarNotifier", "https://www.bloomberght.com/", "#dolar > span > small.value.LastPrice", "USD/TRY", "DolarValue", "DolarDifference",
-							2, 0, null, null, errorCountDolarNotifier);
+							2, 0, null, null, errorCountDolarNotifier, ReportLastValueCount);
 					Thread.sleep(SLEEP_TIME);
 					errorCountEuroNotifier = ValueChecker.check("EuroNotifier", "https://www.bloomberght.com/", "#euro > span > small.value.LastPrice", "EUR/TRY", "EuroValue", "EuroDifference", 2, 0,
-							null, null, errorCountEuroNotifier);
+							null, null, errorCountEuroNotifier, ReportLastValueCount);
 					Thread.sleep(SLEEP_TIME);
 					errorCountEurUsdNotifier = ValueChecker.check("EurUsdNotifier", "https://www.bloomberght.com/", "#eur-usd > span > small.value.LastPrice", "EUR/USD", "EurUsdValue", "EurUsdDifference",
-							2, 0, null, null, errorCountEurUsdNotifier);
+							2, 0, null, null, errorCountEurUsdNotifier, ReportLastValueCount);
 					Thread.sleep(SLEEP_TIME);
 					errorCountGauUsdNotifier = ValueChecker.check("GauUsdNotifier", "https://bigpara.hurriyet.com.tr/altin/altin-kg-dolar-fiyati/",
-							"#content > div.contentLeft > div > div.kurDetail.mBot20 > div:nth-child(3) > span.value.up", "GAU/USD", "GauUsdValue", "GauUsdDifference", 1, 3, null, null, errorCountGauUsdNotifier);
+							"#content > div.contentLeft > div > div.kurDetail.mBot20 > div:nth-child(3) > span.value.up", "GAU/USD", "GauUsdValue", "GauUsdDifference", 1, 3, null, null, errorCountGauUsdNotifier,
+							ReportLastValueCount);
 					Thread.sleep(SLEEP_TIME);
 					errorCountGauTryNotifier = ValueChecker.check("GauTryNotifier", "https://finans.mynet.com/altin/xgld-spot-altin-tl-gr/",
 							"body > section > div.row > div.col-12.col-lg-8.col-content > div:nth-child(5) > div > div > div.flex-list-2-col.flex.justify-content-between.data-info-ul-box-m > ul:nth-child(1) > li:nth-child(2) > span:nth-child(2)",
-							"GAU/TRY", "GauTryValue", "GauTryDifference", 0, 0, null, null, errorCountGauTryNotifier);
+							"GAU/TRY", "GauTryValue", "GauTryDifference", 0, 0, null, null, errorCountGauTryNotifier, ReportLastValueCount);
 					Thread.sleep(SLEEP_TIME);
 					errorCountCDS5 = ValueChecker.check("CDS5Notifier", "http://www.worldgovernmentbonds.com/cds-historical-data/turkey/5-years/",
 							"#post-33 > div > div > div.thecontent > div.font-roboto > div:nth-child(5)", "Türkiye 5 Yýllýk CDS", "CDS5Value",
-							"CDS5Difference", 0, 0, null, null, errorCountCDS5);
+							"CDS5Difference", 0, 0, null, null, errorCountCDS5, ReportLastValueCount);
 					Thread.sleep(SLEEP_TIME);
 					errorCountGauOns = ValueChecker.check("GauOnsNotifier", "https://www.bloomberght.com/", "#altin-ons > span > small.value.LastPrice", "ONS Altýn", "GauOnsValue",
-							"GauOnsDifference", 0, 0, ".", "", errorCountGauOns);
+							"GauOnsDifference", 0, 0, ".", "", errorCountGauOns, ReportLastValueCount);
 					Thread.sleep(SLEEP_TIME);
 					errorCountUsdEnd = ValueChecker.check("UsdEndNotifier", "https://www.marketwatch.com/investing/index/dxy",
 							"#maincontent > div.region.region--intraday > div.column.column--aside > div > div.intraday__data > h2 > span",
-							"Dolar Endeksi", "UsdEndValue", "UsdEndDifference", 2, 0, null, null, errorCountUsdEnd);
+							"Dolar Endeksi", "UsdEndValue", "UsdEndDifference", 2, 0, null, null, errorCountUsdEnd, ReportLastValueCount);
 					Thread.sleep(SLEEP_TIME);
 					errorCountBIST100 = ValueChecker.check("BIST100Notifier", "https://bigpara.hurriyet.com.tr/borsa/canli-borsa/",
 							"#content > div > div.contentLeft > div > div.wideContent.sort-bar-x > div.filterBar.liveStockFilterBar > div > div.stockPrice.node-c",
-							"BIST 100 Endeksi", "BIST100Value", "BIST100Difference", 0, 0, null, null, errorCountBIST100);
+							"BIST 100 Endeksi", "BIST100Value", "BIST100Difference", 0, 0, null, null, errorCountBIST100, ReportLastValueCount);
 					Thread.sleep(SLEEP_TIME);
 					errorCountBrent = ValueChecker.check("BrentNotifier", "https://www.bloomberght.com/", "#brent-petrol > span > small.value.LastPrice", "Brent Petrol",
-							"BrentValue", "BrentDifference", 0, 0, null, null, errorCountBrent);
+							"BrentValue", "BrentDifference", 0, 0, null, null, errorCountBrent, ReportLastValueCount);
 					
 					checkErrorCounts();
 				} catch (Exception e) {

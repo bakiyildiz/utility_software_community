@@ -10,6 +10,7 @@ import java.util.List;
 
 import org.by.usc.common.COMMON;
 import org.by.usc.common.model.Mail;
+import org.by.usc.mpm.processor.EarthQuakeProcessing;
 import org.by.usc.mpm.processor.EconomyProcessing;
 import org.by.usc.mpm.processor.HelpProcessing;
 import org.by.usc.mpm.processor.MessageProcessing;
@@ -72,16 +73,22 @@ public class MPM extends COMMON{
 						if(params[0].equalsIgnoreCase("Selam")) {
 							MessageProcessing.process(mail);
 							processIsSuccess = true;
-						}else if(params[0].equalsIgnoreCase("EkonomikVeriler")){
+						} else if(params[0].equalsIgnoreCase("EkonomikVeriler")) {
 							EconomyProcessing.process(mail);
 							processIsSuccess = true;
-						}else if(params[0].equalsIgnoreCase("AddReminder")){
+						} else if(params[0].equalsIgnoreCase("AddReminder")) {
 							ReminderProcessing.process(mail, params);
 							processIsSuccess = true;
-						}else if(params[0].equalsIgnoreCase("help")){
+						} else if(params[0].equalsIgnoreCase("help")) {
 							HelpProcessing.process(mail);
 							processIsSuccess = true;
-						}else {
+						} else if(params[0].equalsIgnoreCase("DepremListesi_Ekle")) {
+							EarthQuakeProcessing.process(mail, true);
+							processIsSuccess = true;
+						} else if(params[0].equalsIgnoreCase("DepremListesi_Sil")) {
+							EarthQuakeProcessing.process(mail, false);
+							processIsSuccess = true;
+						} else {
 							String message = "Talebiniz geçersizdir, lütfen kontrol edip tekrar deneyin. Ayrýca talebin içerisinde boþluk bulunmadýðýndan emin olun.";
 							insertNewMail(APP_NAME, mail.getMailTo(), APP_NAME, message);
 							processIsSuccess = false;
