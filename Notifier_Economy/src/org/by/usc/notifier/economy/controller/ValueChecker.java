@@ -9,6 +9,7 @@ import java.util.List;
 
 import org.by.usc.common.COMMON;
 import org.by.usc.common.model.EconomyReport;
+import org.by.usc.common.model.NotifierParameter;
 import org.by.usc.notifier.economy.NotifierEconomy;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -20,19 +21,18 @@ import org.jsoup.select.Elements;
  */
 public class ValueChecker extends COMMON {
 	
-	public static Long check(String notifierName, String url, String checkCode, String title, String valueConfigName, String differenceConfigName, int digitCount,
-			int removeDigit, String replaceTarget, String replacement, Long errorCount, String lastValueCount) {
+	public static boolean check(NotifierParameter parameters) {
 		
 		double oldValue = 0;
 		double newValue = 0;
 		
 		try {
-        	log(NotifierEconomy.APP_NAME, "Checking " + title + " Value");
-        	newValue = getData(url, checkCode, digitCount, removeDigit, replaceTarget, replacement);
+        	log(NotifierEconomy.APP_NAME, "Checking " + parameters.getTitle() + " Value");
+        	newValue = getData(parameters);
 			
-			String[] valConfKeys = {valueConfigName};
+			String[] valConfKeys = {parameters.getValueConfigName()};
 			HashMap<String, String> valConfigs = getNotifierEconomyValues(valConfKeys);
-			oldValue = Double.valueOf(valConfigs.get(valueConfigName));
+			oldValue = Double.valueOf(valConfigs.get(parameters.getValueConfigName()));
 			
 			if(oldValue != newValue && newValue != 0){
 	            DateFormat dateFormatFull = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
@@ -45,22 +45,22 @@ public class ValueChecker extends COMMON {
 	            String mailContent = null;
 	            boolean mailSend = false;
 	            
-	            String[] confKeys = {differenceConfigName};
+	            String[] confKeys = {parameters.getDifferenceConfigName()};
 	    		HashMap<String, String> configs = getNotifierEconomyValues(confKeys);
-	    		String value = configs.get(differenceConfigName);
+	    		String value = configs.get(parameters.getDifferenceConfigName());
 	    		double dif = Double.valueOf(value);
-            	List<EconomyReport> report = getEconomyValueHistory(valConfKeys[0], lastValueCount);
+            	List<EconomyReport> report = getEconomyValueHistory(valConfKeys[0], parameters.getLastValueCount());
 	            
 	            if(kontrol >= dif){
-	            	mailSubject = title + " Notify";
-	            	mailContent = title + " deðeri düþtü.\n\nEski deðer: " + oldValue + ", yeni deðer: " + newValue + " - " + dateFormatFull.format(date);
+	            	mailSubject = parameters.getTitle() + " Notify";
+	            	mailContent = parameters.getTitle() + " deðeri düþtü.\n\nEski deðer: " + oldValue + ", yeni deðer: " + newValue + " - " + dateFormatFull.format(date);
 	            	mailSend = true;
 	                oldValue = newValue;
 	                updateNotifierEconomyValue(valConfKeys[0], String.valueOf(oldValue));
                     addNotifierEconomyValueHistory(valConfKeys[0], String.valueOf(newValue), false);
 	            }else if(kontrol <= -dif){
-	            	mailSubject = title + " Notify";
-	            	mailContent = title + " deðeri yükseldi.\n\nEski deðer: " + oldValue + ", yeni deðer: " + newValue + " - " + dateFormatFull.format(date);
+	            	mailSubject = parameters.getTitle() + " Notify";
+	            	mailContent = parameters.getTitle() + " deðeri yükseldi.\n\nEski deðer: " + oldValue + ", yeni deðer: " + newValue + " - " + dateFormatFull.format(date);
 	            	mailSend = true;
 	                oldValue = newValue;
 	                updateNotifierEconomyValue(valConfKeys[0], String.valueOf(oldValue));
@@ -73,37 +73,37 @@ public class ValueChecker extends COMMON {
                     	mailContent += "\n" + economyReport.getValue() + " " + (economyReport.getIsIncrease() ? "+" : "-") + " " + economyReport.getDate();
 					}
                 	
-	            	List<String> mailList = getMailList(notifierName);
+	            	List<String> mailList = getMailList(parameters.getNotifierName());
 	                for(String mailTo : mailList) {
-	                	insertNewMail(notifierName, mailTo, mailSubject, mailContent);
+	                	insertNewMail(parameters.getNotifierName(), mailTo, mailSubject, mailContent);
 	                }
 	            }
 	        }
 		} catch (Exception e) {
 			e.printStackTrace();
-			log(NotifierEconomy.APP_NAME, "check " + title + " Exception: " + e);
-			errorCount++;
+			log(NotifierEconomy.APP_NAME, "check " + parameters.getTitle() + " Exception: " + e);
+			return false;
 		}
 		
-		return errorCount;
+		return true;
 	}
 	
-	private static double getData(String url, String checkCode, int digitCount, int removeDigit, String replaceTarget, String replacement) throws Exception {
+	private static double getData(NotifierParameter parameters) throws Exception {
         try {
-        	Document doc = Jsoup.connect(url).userAgent("mozilla/17.0").timeout(20000).get();
-        	Elements elementByID = doc.select(checkCode);
+        	Document doc = Jsoup.connect(parameters.getUrl()).userAgent("mozilla/17.0").timeout(20000).get();
+        	Elements elementByID = doc.select(parameters.getCheckCode());
             String stringValue = elementByID.text();
             
-            if(replaceTarget != null && replacement != null)
-            	stringValue = stringValue.replace(replaceTarget, replacement);
+            if(parameters.getReplaceTarget() != null && parameters.getReplacement() != null)
+            	stringValue = stringValue.replace(parameters.getReplaceTarget(), parameters.getReplacement());
             
             stringValue = stringValue.replace(",", "."); // default
             
-            if(removeDigit > 0)
-            	stringValue = stringValue.substring(0, stringValue.length()-removeDigit);
+            if(parameters.getRemoveDigit() > 0)
+            	stringValue = stringValue.substring(0, stringValue.length()-parameters.getRemoveDigit());
             
             String format = "##.";
-            for (int i = 0; i < digitCount; i++)
+            for (int i = 0; i < parameters.getDigitCount(); i++)
 				format += "#";
             
             stringValue = new DecimalFormat(format).format(Double.valueOf(stringValue));
